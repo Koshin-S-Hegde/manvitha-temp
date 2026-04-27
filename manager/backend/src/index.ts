@@ -3,7 +3,7 @@ import express from "express"
 import fs from "fs"
 
 const port = 5433;
-const path = "/home/kosh/My-Folder/couple-orchestrator/manager/backend/"
+const path = "/home/kosh/couple-orchestrator/"
 const composePath = "/home/kosh/couple-orchestrator/docker-composes/"
 
 const app: Application = express();
@@ -111,6 +111,29 @@ app.post("/log", async (req: Request, res: Response) => {
     })
 });
 
+app.post("/all-up", async (req: Request, res: Response) => {
+    const { name } = req.body;
+    workers.forEach(async (worker, _) => {
+        try {
+            await (await fetch(
+                worker.url + "up",
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        name: name,
+                    }),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                },
+            )).json()
+        } catch {}
+    })
+    res.send({
+        success: 0,
+    })
+});
+
 app.post("/up", async (req: Request, res: Response) => {
     const { name, id } = req.body;
     const worker = workers.get(id)
@@ -118,16 +141,12 @@ app.post("/up", async (req: Request, res: Response) => {
         res.send({
             success: 1,
             err_msg: "Worker doesn't exist",
-            out: "",
-            err: "",
         })
         return;
     }
     const { 
         success,
         err_msg,
-        out,
-        err
     } = await (await fetch(
         worker.url + "up",
         {
@@ -143,8 +162,6 @@ app.post("/up", async (req: Request, res: Response) => {
     res.send({
         success: success,
         err_msg: err_msg,
-        out: out,
-        err: err,
     })
 });
 
